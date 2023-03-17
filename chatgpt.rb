@@ -1,9 +1,11 @@
-require "dotenv/load"
+require "dotenv"
 require "openai"
 require "word_wrap"
 
+Dotenv.load(".env", "~/.chatgpt-cli.env")
+
 OpenAI.configure do |config|
-  config.access_token = ENV.fetch("API_KEY")
+  config.access_token = ENV.fetch("OPENAI_API_KEY")
 end
 
 client = OpenAI::Client.new
@@ -14,7 +16,7 @@ begin
     print "\x1b[36m>\x1b[0m "
     history << gets.chomp
     res = client.chat(parameters: {
-      model: "gpt-3.5-turbo",
+      model: ENV.fetch("OPENAI_MODEL"),
       messages: [{ role: "user", content: history.join("\n\n") }],
       temperature: 0.7,
     })
