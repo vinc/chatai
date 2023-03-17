@@ -19,23 +19,22 @@ You can also install the script to use it everywhere:
 
 ## Usage
 
-    $ ruby chatgpt.rb
+    $ chatgpt
     > What is Unix?
-    Unix is a powerful and versatile operating system that was first developed in
-    the 1960s. It is designed to be used on a wide range of computer hardware, from
-    small embedded devices to large mainframes. Unix is known for its stability,
-    security, and flexibility, and it has become one of the most popular operating
-    systems in the world. It is widely used in enterprise computing, scientific
-    research, and academic settings, and it is also a popular choice for web
-    servers and other networking applications. Unix is known for its command-line
-    interface, which allows users to interact with the system using a series of
-    commands and text-based tools.
+    Unix is a multi-user, multi-tasking operating system that was first developed
+    in the 1960s. It is known for its stability, security, and flexibility, and is
+    widely used in servers, workstations, and embedded systems. Unix is based on
+    the concept of a shell, which allows users to interact with the system through
+    a command-line interface or graphical user interface. It also has a rich set of
+    standard utilities and tools that make it easy to perform various tasks such as
+    file management, process management, networking, and more. Unix has many
+    variants, including Linux, FreeBSD, Solaris, and macOS.
 
-    > Who made Unix?
-    Unix was originally developed by a group of researchers at Bell Labs, including
-    Ken Thompson, Dennis Ritchie, and others.
+    > Who wrote it?
+    Unix was initially written by Ken Thompson, Dennis Ritchie, and others at Bell
+    Labs in the late 1960s and early 1970s.
 
-    > Can you list 5 contributors of Unix?
+    > List 5 contributors
     1. Ken Thompson
     2. Dennis Ritchie
     3. Brian Kernighan
