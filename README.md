@@ -1,25 +1,21 @@
-# ChatGPT CLI
+# Chatai
 
 A simple CLI for ChatGPT written in Ruby
 
 ## Setup
 
-Run the following commands to setup the CLI:
+Copy and edit the env file with your [API key](https://platform.openai.com/account/api-keys)
 
-    $ bundle install
-    $ cp .env.sample .env
+    $ cp .env.sample ~/.chatai.env
 
-Then edit the `.env` file with your [API key](https://platform.openai.com/account/api-keys)
+Then install the CLI
 
-You can also install the script to use it everywhere:
-
-    $ sudo cp chatgpt.rb /usr/local/bin/chatgpt
-    $ sudo chmod 755 /usr/local/bin/chatgpt
-    $ cp .env ~/.chatgpt.env
+    $ gem build chatai.gemspec
+    $ gem install chatai-*.gem
 
 ## Usage
 
-    $ chatgpt
+    $ chatai
     > What is Unix?
     Unix is a multi-user, multi-tasking operating system that was first developed
     in the 1960s. It is known for its stability, security, and flexibility, and is
