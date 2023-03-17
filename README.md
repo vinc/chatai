@@ -11,10 +11,10 @@ Run the following commands to setup the CLI:
 
 Then edit the `.env` file with your [API key](https://platform.openai.com/account/api-keys)
 
-You can also install the script:
+You can also install the script to use it everywhere:
 
     $ sudo cp chatgpt.rb /usr/local/bin/chatgpt
-    $ sudo chmod u+x /usr/local/bin/chatgpt
+    $ sudo chmod 755 /usr/local/bin/chatgpt
     $ cp .env ~/.chatgpt.env
 
 ## Usage
