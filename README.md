@@ -8,7 +8,7 @@ Copy and edit the env file with your [API key](https://platform.openai.com/accou
 
     $ cp .env.sample ~/.chatai.env
 
-Then install the CLI
+Build and install the CLI
 
     $ gem build chatai.gemspec
     $ gem install chatai-*.gem
@@ -39,4 +39,4 @@ Then install the CLI
 
 ## License
 
-ChatGPT CLI is released under MIT
+Chatai is released under MIT
