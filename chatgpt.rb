@@ -3,7 +3,7 @@ require "dotenv"
 require "openai"
 require "word_wrap"
 
-Dotenv.load(".env", "~/.chatgpt-cli.env")
+Dotenv.load(".env", "~/.chatgpt.env")
 
 OpenAI.configure do |config|
   config.access_token = ENV.fetch("OPENAI_API_KEY")

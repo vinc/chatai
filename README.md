@@ -4,11 +4,22 @@ A simple CLI for ChatGPT written in Ruby
 
 ## Setup
 
+Run the following commands to setup the CLI:
+
     $ bundle install
+    $ cp .env.sample .env
+
+Then edit the `.env` file with your [API key](https://platform.openai.com/account/api-keys)
+
+You can also install the script:
+
+    $ sudo cp chatgpt.rb /usr/local/bin/chatgpt
+    $ sudo chmod u+x /usr/local/bin/chatgpt
+    $ cp .env ~/.chatgpt.env
 
 ## Usage
 
-    $ ruby chatgpt-cli.rb
+    $ ruby chatgpt.rb
     > What is Unix?
     Unix is a powerful and versatile operating system that was first developed in
     the 1960s. It is designed to be used on a wide range of computer hardware, from
