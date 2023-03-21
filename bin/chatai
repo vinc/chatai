@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
+
 require "dotenv"
 require "openai"
+require "readline"
 require "word_wrap"
 
 Dotenv.load(".env", "~/.chatai.env")
@@ -15,30 +17,35 @@ end
 client = OpenAI::Client.new
 
 begin
-  history = []
-  while true
-    print "\x1b[36m>\x1b[0m "
-    prompt = gets&.chomp
-    break if prompt.nil?
-    history << prompt
+  context = []
+  loop do
+    line = Readline::readline("\x1b[36m>\x1b[0m ")
+    break if line.nil? || line == "quit"
+
+    Readline::HISTORY << line
+    context << line
+
     parameters = {
       model: ENV.fetch("OPENAI_MODEL", "gtp-3.5-turbo"),
-      messages: [{ role: "user", content: history.join("\n\n") }],
+      messages: [{ role: "user", content: context.join("\n\n") }],
       temperature: 0.7,
     }
+
     begin
       res = client.chat(parameters: parameters)
     rescue Net::ReadTimeout
       redo
     end
+
     if (err = res.dig("error", "message"))
       puts err
       exit 1
     end
+
     text = res.dig("choices", 0, "message", "content").strip
     puts WordWrap.ww(text, 80)
     puts
-    history << text
+    context << text
   end
 rescue SignalException
   puts
