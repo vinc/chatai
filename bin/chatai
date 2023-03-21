@@ -21,11 +21,16 @@ begin
     prompt = gets&.chomp
     break if prompt.nil?
     history << prompt
-    res = client.chat(parameters: {
+    parameters = {
       model: ENV.fetch("OPENAI_MODEL", "gtp-3.5-turbo"),
       messages: [{ role: "user", content: history.join("\n\n") }],
       temperature: 0.7,
-    })
+    }
+    begin
+      res = client.chat(parameters: parameters)
+    rescue Net::ReadTimeout
+      redo
+    end
     if (err = res.dig("error", "message"))
       puts err
       exit 1
