@@ -18,7 +18,9 @@ begin
   history = []
   while true
     print "\x1b[36m>\x1b[0m "
-    history << gets.chomp
+    prompt = gets&.chomp
+    break if prompt.nil?
+    history << prompt
     res = client.chat(parameters: {
       model: ENV.fetch("OPENAI_MODEL", "gtp-3.5-turbo"),
       messages: [{ role: "user", content: history.join("\n\n") }],
