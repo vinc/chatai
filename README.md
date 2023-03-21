@@ -2,6 +2,8 @@
 
 A simple CLI for ChatGPT written in Ruby
 
+![chatai](chatai.png)
+
 ## Setup
 
 Copy and edit the env file with your [API key](https://platform.openai.com/account/api-keys)
