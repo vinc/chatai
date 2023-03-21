@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "chatai"
-  s.version     = "0.1.0"
+  s.version     = "0.1.1"
   s.license     = "MIT"
   s.summary     = "ChatGPT CLI"
   s.description = "A simple CLI for ChatGPT"
