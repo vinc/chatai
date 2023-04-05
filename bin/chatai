@@ -24,6 +24,8 @@ def chat(client, input)
     res = client.chat(parameters: parameters)
   rescue Net::ReadTimeout
     retry
+  rescue Errno::ECONNRESET
+    retry
   end
   if (err = res.dig("error", "message"))
     puts err
