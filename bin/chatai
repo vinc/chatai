@@ -2,7 +2,7 @@
 
 require "dotenv"
 require "openai"
-require "readline"
+require "reline"
 require "word_wrap"
 
 Dotenv.load(".env", "~/.chatai.env")
@@ -43,10 +43,10 @@ if $stdin.tty?
   begin
     context = []
     loop do
-      line = Readline::readline("\x1b[36m>\x1b[0m ")
+      line = Reline.readline("\x1b[36m>\x1b[0m ")
       break if line.nil? || line == "quit"
 
-      Readline::HISTORY << line
+      Reline::HISTORY << line
       context << line
       text = chat(client, context.join("\n\n"))
       puts fmt(text)
