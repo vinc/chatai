@@ -86,11 +86,16 @@ def get_save_path
   end
 end
 
-def construct_file_path(save_path, detected_language)
-  time = DateTime.now
-  file_name = time.strftime("%Y-%m-%d_%H-%M-%S")
+def construct_file_path(save_path, detected_language, custom_filename = nil)
+  file_name = custom_filename || DateTime.now.strftime("%Y-%m-%d_%H:%M:%S")
   file_extension = LANGUAGE_TO_EXTENSION[detected_language] || "txt"
   "#{save_path}/#{file_name}.#{file_extension}"
+end
+
+def get_custom_filename
+  puts "Custom filename (without extension) or press enter for default name"
+  input = gets.chomp
+  input.empty? ? nil : input
 end
 
 client = OpenAI::Client.new
@@ -123,7 +128,7 @@ if $stdin.tty?
     Reline::HISTORY << line
     context << line
     text = chat(client, context.join("\n\n"))
-    puts fmt(text)
+    puts "\x1b[35m#{fmt(text)}\x1b[0m"
     puts
     context << text
     chat_happened = true
@@ -136,7 +141,9 @@ if $stdin.tty?
 
       if response == 'y'
         save_path = get_save_path
-        file_path = construct_file_path(save_path, detected_language)
+        # Ask for custom filename
+        custom_filename = get_custom_filename
+        file_path = construct_file_path(save_path, detected_language, custom_filename)
         File.write(file_path, context.join("\n"))
         puts "Chat history saved at #{file_path}!"
         break
