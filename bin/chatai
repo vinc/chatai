@@ -1,16 +1,28 @@
 #!/usr/bin/env ruby
 
-require "dotenv"
-require "openai"
-require "reline"
-require "word_wrap"
+require 'dotenv'
+require 'openai'
+require 'reline'
+require 'word_wrap'
 
 Dotenv.load(".env", "~/.chatai.env")
+SAVE_HISTORY = ENV['SAVE_HISTORY'] == 'true'
+DEV_MODE = ENV['DEV_MODE'] == 'true'
+
+LANGUAGE_TO_EXTENSION = {
+  "ruby" => "rb",
+  "python" => "py",
+  "html" => "html",
+  "javascript" => "js",
+  "java" => "java",
+  "c" => "c",
+  "css" => "css"
+}
 
 OpenAI.configure do |config|
-  config.access_token = ENV.fetch("OPENAI_API_KEY") do |name|
-    print "OpenAI API Key: "
-    gets.chomp
+  config.access_token = ENV.fetch("OPENAI_API_KEY") do 
+    puts "Don't forget to add your Api Key on the .env file"
+    exit 1
   end
 end
 
@@ -27,37 +39,125 @@ def chat(client, input)
   rescue Errno::ECONNRESET
     retry
   end
-  if (err = res.dig("error", "message"))
+  if(err = res.dig("error", "message"))
     puts err
     exit 1
   end
-  res.dig("choices", 0, "message", "content").strip
+    res.dig("choices", 0, "message", "content").strip
 end
 
 def fmt(text)
   WordWrap.ww(text, 72)
 end
 
-client = OpenAI::Client.new
-if $stdin.tty?
-  begin
-    context = []
-    loop do
-      line = Reline.readline("\x1b[36m>\x1b[0m ")
-      break if line.nil? || line == "quit"
+# Formats the given text to prepare it for execution (DEV_MODE)
+# also extracts the programming language
+def prefix_comment(text)
+  in_block = false
+  language = nil
 
-      Reline::HISTORY << line
-      context << line
-      text = chat(client, context.join("\n\n"))
-      puts fmt(text)
-      puts
-      context << text
+  processed_text = text.split("\n").map do |line|
+    stripped_line = line.strip
+    if stripped_line.start_with?("```") && !in_block
+      in_block = true
+      language = line.strip[3..].strip
+      next "# " + line
+    elsif stripped_line == "```"
+      in_block = false
+      next "# " + line
     end
-  rescue SignalException
+
+    in_block ? line : "# " + line
+  end.compact.join("\n")
+
+  return [processed_text, language]
+end
+
+# Setting the desired save path and name file
+def get_save_path
+  puts "Where would you like to save the history"
+  location_response = gets.chomp.downcase
+  case location_response
+  when "%" then "/home/#{ENV['USERNAME']}"
+  when "d" then ENV['DEFAULT_SAVE_PATH']
+  when "." then "."
+  else
+    "."
+  end
+end
+
+def construct_file_path(save_path, detected_language, custom_filename = nil)
+  file_name = custom_filename || DateTime.now.strftime("%Y-%m-%d_%H:%M:%S")
+  file_extension = LANGUAGE_TO_EXTENSION[detected_language] || "txt"
+  "#{save_path}/#{file_name}.#{file_extension}"
+end
+
+def get_custom_filename
+  puts "Custom filename (without extension) or press enter for default name"
+  input = gets.chomp
+  input.empty? ? nil : input
+end
+
+client = OpenAI::Client.new
+chat_happened = false
+detected_language = nil
+
+if $stdin.tty?
+  context = []
+  loop do
+    line = Reline.readline("\x1b[36m>\x1b[0m")
     puts
+    break if line.nil? || line.strip.empty? || line == "quit"
+
+    if DEV_MODE && line.strip == 'vim'
+      # Check if vim is available in the user system
+      unless system('which vim > /dev/null 2>&1')
+        puts "It seems you don't have 'vim' installed"
+        next
+      end
+
+      processed_text, detected_language = prefix_comment(context.join("\n"))
+      temp_file = "temp_context_#{Time.now.to_i}.#{LANGUAGE_TO_EXTENSION[detected_language]}"
+      File.write(temp_file, processed_text)
+      # This will suspend the current process and switch to vim
+      system("vim", temp_file)
+      context = File.readlines(temp_file).map(&:chomp)
+      next
+    end
+
+    Reline::HISTORY << line
+    context << line
+    text = chat(client, context.join("\n\n"))
+    puts "\x1b[35m#{fmt(text)}\x1b[0m"
+    puts
+    context << text
+    chat_happened = true
+  end
+
+  if SAVE_HISTORY && chat_happened
+    loop do
+      puts "Do you want to save the chat history? (y/n)"
+      response = gets.chomp.downcase
+
+      if response == 'y'
+        save_path = get_save_path
+        # Ask for custom filename
+        custom_filename = get_custom_filename
+        file_path = construct_file_path(save_path, detected_language, custom_filename)
+        File.write(file_path, context.join("\n"))
+        puts "Chat history saved at #{file_path}!"
+        break
+      elsif response == 'n'
+        puts "Exiting..."
+        break
+      else
+        puts "Invalid input. Please respond with 'y' or 'n'."
+      end
+    end
   end
 else
   context = ARGF.read
   text = chat(client, context)
   puts fmt(text)
 end
+
