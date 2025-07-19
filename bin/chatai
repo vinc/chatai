@@ -8,17 +8,21 @@ require "word_wrap"
 Dotenv.load(".env", "~/.chatai.env")
 
 OpenAI.configure do |config|
-  config.access_token = ENV.fetch("OPENAI_API_KEY") do |name|
-    print "OpenAI API Key: "
-    gets.chomp
+  if ENV.key?("CHATAI_URI")
+    config.uri_base = ENV.fetch("CHATAI_URI")
+  else
+    config.access_token = ENV.fetch("CHATAI_API_KEY") do |name|
+      print "OpenAI API Key: "
+      gets.chomp
+    end
   end
 end
 
-def chat(openai, input)
+def chat(openai, messages)
   parameters = {
-    model: ENV.fetch("OPENAI_MODEL", "gpt-3.5-turbo"),
-    messages: [{ role: "user", content: input }],
-    temperature: 0.7,
+    model: ENV.fetch("CHATAI_MODEL", "gpt-3.5-turbo"),
+    messages: messages,
+    temperature: 0.7
   }
   begin
     res = openai.chat(parameters: parameters)
@@ -35,7 +39,7 @@ def chat(openai, input)
 end
 
 def fmt(text)
-  WordWrap.ww(text, 72)
+  WordWrap.ww(text, 80)
 end
 
 openai = OpenAI::Client.new
@@ -47,54 +51,58 @@ ARGV.each do |arg|
   end
 end
 
+def token_count(messages)
+  context = messages.reduce("") { |ctx, msg| ctx + msg[:content] }
+  OpenAI.rough_token_count(context)
+end
+
+prompt = ENV.fetch("CHATAI_PROMPT", "You are a helpful and concise assistant")
+
 if options[:server]
   port = ENV.fetch("CHATAI_PORT", "4242").to_i
   server = TCPServer.new(port)
   loop do
     Thread.start(server.accept) do |client|
-      begin
-        context = []
-        loop do
-          line = client.gets&.chomp
-          break if line.nil?
-          context << line
-          content = context.join("\n\n")
-          tokens = OpenAI.rough_token_count(content)
-          text = chat(openai, content)
-          puts "#{client.peeraddr[3]} - - [#{Time.new}] #{tokens}"
-          client.puts
-          client.puts fmt(text)
-          client.puts
-          context << text
-        end
-      rescue => e
-        puts "Error: #{e.message}"
-      ensure
-        client.close
+      messages = [{ role: "system", content: prompt }]
+      loop do
+        question = client.gets&.chomp
+        break if question.nil?
+
+        messages << { role: "user", content: question }
+        answer = chat(openai, messages)
+        puts "#{client.peeraddr[3]} - - [#{Time.new}] #{token_count(messages)}"
+        client.puts
+        client.puts fmt(answer)
+        client.puts
+        messages << { role: "assistant", content: answer }
       end
+    rescue => e
+      puts "Error: #{e.message}"
+    ensure
+      client.close
     end
   end
 else
+  messages = [{ role: "system", content: prompt }]
   if $stdin.tty?
-    context = []
     begin
       loop do
-        line = Reline.readline("\x1b[36m>\x1b[0m ")
-        break if line.nil? || line == "quit"
+        question = Reline.readline("\x1b[36m>\x1b[0m ")
+        break if question.nil? || question == "quit"
 
-        Reline::HISTORY << line
-        context << line
-        text = chat(openai, context.join("\n\n"))
-        puts fmt(text)
+        Reline::HISTORY << question
+        messages << { role: "user", content: question }
+        answer = chat(openai, messages)
+        puts fmt(answer)
         puts
-        context << text
+        messages << { role: "assistant", content: answer }
       end
     rescue SignalException
       puts
     end
   else
-    context = ARGF.read
-    text = chat(openai, context)
-    puts fmt(text)
+    messages << { role: "user", content: ARGF.read }
+    answer = chat(openai, messages)
+    puts fmt(answer)
   end
 end
